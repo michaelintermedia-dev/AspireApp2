@@ -9,8 +9,10 @@ var kafka = builder.AddKafka("kafka")
     .WithKafkaUI();
 
 var postgres = builder.AddPostgres("postgres")
-    .WithDataVolume()
-    .WithPgAdmin();
+.WithDataVolume()
+.WithPgAdmin()
+.WithHostPort(5432)
+.AddDatabase("recordings");
 
 builder.AddProject<Projects.WebAPI>("webapi")
     .WithReference(redis)

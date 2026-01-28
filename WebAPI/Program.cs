@@ -1,7 +1,11 @@
-using System.Text.Json;
+using Confluent.Kafka;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
-using Confluent.Kafka;
+using System.Text.Json;
+using WebAPI;
+using WebAPI.Models.DbData;
+using WebAPI.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,9 +18,20 @@ builder.AddKafkaConsumer<string, string>("kafka", consumerBuilder =>
     consumerBuilder.Config.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
 });
 
+// Add PostgreSQL DbContext
+builder.Services.AddDbContext<RecordingsDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("recordings")));
+
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddScoped<IUploadService, UploadService>();
+builder.Services.AddScoped<IDbService, DbService>();
+builder.Services.AddScoped<IMessaging, Messaging>();
+builder.Services.AddScoped<IDeviceService, DeviceService>();
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
 
@@ -85,6 +100,10 @@ app.MapGet("/weatherforecast", async ([FromServices] IDistributedCache cache, [F
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+app.MapEndpoints();
+
+app.MapHealthChecks("/healthz/live");
 
 app.Run();
 
