@@ -9,6 +9,7 @@ var kafka = builder.AddKafka("kafka")
     .WithKafkaUI();
 
 var postgres = builder.AddPostgres("postgres")
+    .WithDataVolume()
     .WithPgAdmin();
 
 builder.AddProject<Projects.WebAPI>("webapi")
