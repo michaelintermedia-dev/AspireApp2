@@ -8,7 +8,6 @@ using WebAPI.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
 builder.AddServiceDefaults();
 builder.AddRedisDistributedCache("redis");
 builder.AddKafkaProducer<string, string>("kafka");
@@ -33,8 +32,19 @@ builder.Services.AddScoped<IDeviceService, DeviceService>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
+app.UseExceptionHandler(_ => { });
 app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.
@@ -47,7 +57,10 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// Comment out HTTPS redirection for HTTP-only access from mobile app
+// app.UseHttpsRedirection();
+
+app.UseCors("AllowAll");
 
 var summaries = new[]
 {
