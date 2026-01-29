@@ -481,3 +481,19 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 /WebAPI/Uploads
+
+
+# .NET
+bin/
+obj/
+*.user
+
+# Node/React Native
+node_modules/
+.expo/
+.expo-shared/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
