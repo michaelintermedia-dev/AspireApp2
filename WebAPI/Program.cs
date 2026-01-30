@@ -8,6 +8,7 @@ using WebAPI.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
 builder.AddServiceDefaults();
 builder.AddRedisDistributedCache("redis");
 builder.AddKafkaProducer<string, string>("kafka");

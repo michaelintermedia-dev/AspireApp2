@@ -15,10 +15,11 @@ var postgres = builder.AddPostgres("postgres")
 .AddDatabase("recordings");
 
 builder.AddProject<Projects.WebAPI>("webapi")
-    .WithReference(redis)
-    .WithReference(kafka)
-    .WithReference(postgres)
-    .WaitFor(kafka);
+.WithReference(redis)
+.WithReference(kafka)
+.WithReference(postgres)
+.WithExternalHttpEndpoints()
+.WaitFor(kafka);
 
 builder.AddProject<Projects.WorkerService>("workerservice")
     .WithReference(kafka)
