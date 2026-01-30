@@ -51,7 +51,7 @@ public class TaskProcessor : ITaskProcessor
 
         try
         {
-            const string uploadsPath = @"C:\Projects\test\WebApplication1\WebApplication1\Uploads";
+            const string uploadsPath = @"C:\Projects\test2\AspireApp2\WebAPI\Uploads";
             const string transcribeUrl = "http://localhost:8000/transcribe";
 
             if (!Directory.Exists(uploadsPath))
