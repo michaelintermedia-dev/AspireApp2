@@ -1,5 +1,76 @@
 using AudioService.Models;
 using Confluent.Kafka;
+using static Confluent.Kafka.ConfigPropertyNames;
+
+namespace AudioService.Services;
+
+public class AudioProcessingService(ILogger<AudioProcessingService> logger, IConsumer<string, string> kafkaConsumer, IServiceProvider serviceProvider,
+        IConfiguration configuratio) : BackgroundService
+{
+    private int _processCount = 0;
+    private int _errorCount = 0;
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        const string topic = "audio.analyze.requested";
+
+        try
+        {
+            kafkaConsumer.Subscribe(topic);
+            logger.LogInformation("Subscribed to Kafka topic: {topic}", topic);
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    var consumeResult = kafkaConsumer.Consume(stoppingToken);
+
+                    if (consumeResult.IsPartitionEOF)
+                    {
+                        logger.LogDebug("Reached end of partition: {partition} at offset {offset}",
+                            consumeResult.Partition, consumeResult.Offset);
+                        continue;
+                    }
+                    logger.LogDebug("Message received from topic {topic} partition {partition} at offset {offset}: {value}",
+                        consumeResult.Topic, consumeResult.Partition, consumeResult.Offset, consumeResult.Message.Value);
+
+                    var message = System.Text.Json.JsonSerializer.Deserialize<MessagePayload>(consumeResult.Message.Value, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    using (var scope = serviceProvider.CreateScope())
+                    {
+                        var taskProcessor = scope.ServiceProvider.GetRequiredService<ITaskProcessor>();
+                        await taskProcessor.ProcessAsync(stoppingToken, message.FilePath);
+                    }
+
+                    _processCount++;
+                    logger.LogDebug("Processing cycle #{processNumber} completed successfully", _processCount);
+                }
+                catch (ConsumeException ex)
+                {
+                    _errorCount++;
+                    logger.LogError(ex, "Kafka consume error (Error #{errorCount}): {error}", _errorCount, ex.Error.Reason);
+                }
+                catch (Exception ex)
+                {
+                    _errorCount++;
+                    logger.LogError(ex, "Error processing message (Error #{errorCount})", _errorCount);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogInformation("Audio Processing Service cancellation requested");
+        }
+        finally
+        {
+            kafkaConsumer.Close();
+        }
+    }
+}
+
+
+/*
+using AudioService.Models;
+using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -120,3 +191,4 @@ public class AudioProcessingService : BackgroundService
         _logger.LogInformation("Audio Processing Service graceful shutdown completed");
     }
 }
+*/
