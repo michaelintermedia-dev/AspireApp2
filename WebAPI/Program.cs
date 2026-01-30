@@ -6,8 +6,19 @@ using WebAPI;
 using WebAPI.Models.DbData;
 using WebAPI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.HttpLogging;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddHttpLogging(logging =>
+{
+    logging.LoggingFields = HttpLoggingFields.RequestPropertiesAndHeaders |
+                            HttpLoggingFields.ResponsePropertiesAndHeaders |
+                            HttpLoggingFields.RequestBody |
+                            HttpLoggingFields.ResponseBody;
+    logging.RequestBodyLogLimit = 4096;
+    logging.ResponseBodyLogLimit = 4096;
+});
 
 builder.AddServiceDefaults();
 builder.AddRedisDistributedCache("redis");
@@ -45,6 +56,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseHttpLogging();
 app.UseExceptionHandler(_ => { });
 app.MapDefaultEndpoints();
 

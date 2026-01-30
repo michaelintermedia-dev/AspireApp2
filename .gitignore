@@ -497,3 +497,4 @@ node_modules/
 *.p12
 *.key
 *.mobileprovision
+/my-mobile-test1/google-services.json

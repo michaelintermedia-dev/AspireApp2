@@ -25,5 +25,9 @@ builder.AddProject<Projects.WorkerService>("workerservice")
     .WithReference(kafka)
     .WaitFor(kafka);
 
+builder.AddProject<Projects.WorkerService>("AudioService")
+    .WithReference(kafka)
+    .WaitFor(kafka);
+
 builder.Build().Run();
 
