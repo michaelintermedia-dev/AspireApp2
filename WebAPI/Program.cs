@@ -10,17 +10,19 @@ using Microsoft.AspNetCore.HttpLogging;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();  // Call this FIRST
+
+// Now configure logging (this will work with Aspire)
+builder.Logging.AddFilter("Microsoft.AspNetCore.HttpLogging", LogLevel.Information);
+
 builder.Services.AddHttpLogging(logging =>
 {
-    logging.LoggingFields = HttpLoggingFields.RequestPropertiesAndHeaders |
-                            HttpLoggingFields.ResponsePropertiesAndHeaders |
-                            HttpLoggingFields.RequestBody |
-                            HttpLoggingFields.ResponseBody;
+    logging.LoggingFields = HttpLoggingFields.All;
     logging.RequestBodyLogLimit = 4096;
     logging.ResponseBodyLogLimit = 4096;
+    logging.MediaTypeOptions.AddText("application/json");
 });
 
-builder.AddServiceDefaults();
 builder.AddRedisDistributedCache("redis");
 builder.AddKafkaProducer<string, string>("kafka");
 builder.AddKafkaConsumer<string, string>("kafka", consumerBuilder =>
@@ -33,8 +35,6 @@ builder.AddKafkaConsumer<string, string>("kafka", consumerBuilder =>
 builder.Services.AddDbContext<RecordingsDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("recordings")));
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 builder.Services.AddScoped<IUploadService, UploadService>();
