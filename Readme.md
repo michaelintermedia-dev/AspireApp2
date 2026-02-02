@@ -1,2 +1,1 @@
-dotnet ef dbcontext scaffold "Host=localhost;Port=5432;Database=recordings;Username=postgres;Password=postgres" Npgsql.EntityFrameworkCore.PostgreSQL --project WebAPI --output-dir DbData --context-dir DbData --context RecordingsDbContext --force
-
+dotnet ef dbcontext scaffold "Host=localhost;Port=5432;Database=recordings;Username=postgres;Password=5z(yjG.A0r9DpeZTU_q3Rz" Npgsql.EntityFrameworkCore.PostgreSQL --project WebAPI --output-dir Models/DbData --context-dir Models/DbData --context 

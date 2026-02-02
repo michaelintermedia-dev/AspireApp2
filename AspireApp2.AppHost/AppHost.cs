@@ -10,8 +10,9 @@ var kafka = builder.AddKafka("kafka")
 
 var postgres = builder.AddPostgres("postgres")
 .WithDataVolume()
-.WithPgAdmin()
+.WithPgAdmin(c => c.WithLifetime(ContainerLifetime.Persistent))
 .WithHostPort(5432)
+.WithLifetime(ContainerLifetime.Persistent)
 .AddDatabase("recordings");
 
 var whisperApi = builder.AddContainer("whisper-api", "whisper-api")

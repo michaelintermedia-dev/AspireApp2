@@ -2,11 +2,15 @@ using Confluent.Kafka;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
-using WebAPI;
 using WebAPI.Models.DbData;
 using WebAPI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.HttpLogging;
+using WebAPI.Endpoints.Endpoints;
+using WebAPI.Endpoints.AuthEndpoints;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +58,26 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Add JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException()))
+        };
+    });
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 app.UseHttpLogging();
@@ -79,6 +103,11 @@ var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
+
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 
 app.MapGet("/weatherforecast", async ([FromServices] IDistributedCache cache, [FromServices] IProducer<string, string> kafkaProducer) =>
 {
@@ -128,6 +157,7 @@ app.MapGet("/weatherforecast", async ([FromServices] IDistributedCache cache, [F
 .WithName("GetWeatherForecast");
 
 app.MapEndpoints();
+app.MapAuthEndpoints();
 
 app.MapHealthChecks("/healthz/live");
 
