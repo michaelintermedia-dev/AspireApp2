@@ -10,7 +10,11 @@ var kafka = builder.AddKafka("kafka")
 
 var postgres = builder.AddPostgres("postgres")
 .WithDataVolume()
-.WithPgAdmin(c => c.WithLifetime(ContainerLifetime.Persistent))
+.WithPgAdmin(c =>
+{
+    c.WithLifetime(ContainerLifetime.Persistent);
+    c.WithHostPort(52653);
+})
 .WithHostPort(5432)
 .WithLifetime(ContainerLifetime.Persistent)
 .AddDatabase("recordings");
