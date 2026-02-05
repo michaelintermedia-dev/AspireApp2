@@ -2,6 +2,7 @@
   <Project Path="AspireApp2.AppHost/AspireApp2.AppHost.csproj" />
   <Project Path="AspireApp2.ServiceDefaults/AspireApp2.ServiceDefaults.csproj" />
   <Project Path="AudioService/AudioService.csproj" />
+  <Project Path="WebAPI.Tests/WebAPI.Tests.csproj" />
   <Project Path="WebAPI/WebAPI.csproj" />
   <Project Path="WorkerService/WorkerService.csproj" />
 </Solution>
