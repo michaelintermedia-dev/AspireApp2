@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 
@@ -7,24 +7,39 @@ function ProfileScreenContent() {
   const { user, logout, isAuthenticated } = useAuth();
 
   const handleLogout = async () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-            } catch (error) {
-              console.error('Logout error:', error);
-            }
+    // Platform-specific confirmation
+    if (Platform.OS === 'web') {
+      // Use browser's native confirm dialog
+      if (window.confirm('Are you sure you want to logout?')) {
+        try {
+          await logout();
+        } catch (error) {
+          console.error('Logout error:', error);
+          alert('Logout failed. Please try again.');
+        }
+      }
+    } else {
+      // Use React Native Alert for mobile
+      Alert.alert(
+        'Logout',
+        'Are you sure you want to logout?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Logout',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await logout();
+              } catch (error) {
+                console.error('Logout error:', error);
+                Alert.alert('Error', 'Logout failed. Please try again.');
+              }
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   if (!isAuthenticated || !user) {
@@ -105,26 +120,25 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
   label: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#666',
-    fontWeight: '500',
   },
   value: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#000',
-    fontWeight: '600',
+    fontWeight: '500',
   },
   logoutButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: '#ff3b30',
+    borderRadius: 12,
     padding: 16,
-    borderRadius: 8,
     alignItems: 'center',
+    marginTop: 'auto',
   },
   logoutButtonText: {
     color: '#fff',
