@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { useEffect } from 'react';
 
 import { setupNotificationHandler, registerForPushNotifications, registerDeviceWithBackend } from '../api/notifications';
+import { AuthProvider } from '../auth/context/AuthContext';
 
 async function initializePushNotifications() {
   try {
@@ -39,10 +40,12 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Slot />
-      <StatusBar style="auto" />
-    </View>
+    <AuthProvider>
+      <View style={styles.container}>
+        <Slot />
+        <StatusBar style="auto" />
+      </View>
+    </AuthProvider>
   );
 }
 
