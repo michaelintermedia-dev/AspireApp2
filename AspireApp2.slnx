@@ -4,5 +4,4 @@
   <Project Path="AudioService/AudioService.csproj" />
   <Project Path="WebAPI.Tests/WebAPI.Tests.csproj" />
   <Project Path="WebAPI/WebAPI.csproj" />
-  <Project Path="WorkerService/WorkerService.csproj" />
 </Solution>
