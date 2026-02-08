@@ -1,8 +1,8 @@
 import { RecordingPresets, requestRecordingPermissionsAsync, useAudioPlayer, useAudioRecorder } from 'expo-audio';
 import { useEffect, useState } from 'react';
-import { FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 //import '../../firebase';
-import { getApiUrl } from '../../api/client';
+import { apiGet, getApiUrl } from '../../api/client';
 
 function RecordingItem({ uri, index }: { uri: string; index: number }) {
     const player = useAudioPlayer(uri);
@@ -91,9 +91,27 @@ function RecordingItem({ uri, index }: { uri: string; index: number }) {
 }
 
 export default function Index() {
-    const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-    const [recordings, setRecordings] = useState<string[]>([]);
-    const [isRecording, setIsRecording] = useState(false);
+const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+const [recordings, setRecordings] = useState<string[]>([]);
+const [isRecording, setIsRecording] = useState(false);
+const [cmsContent, setCmsContent] = useState<Record<string, any> | null>(null);
+const [cmsLoading, setCmsLoading] = useState(true);
+
+useEffect(() => {
+    async function fetchCmsContent() {
+        try {
+            setCmsLoading(true);
+            const data = await apiGet<Record<string, any>>('/cms/content/contenttest1');
+            console.log('[CMS] Fetched content:', data);
+            setCmsContent(data);
+        } catch (err: any) {
+            console.error('[CMS] Fetch error:', err);
+        } finally {
+            setCmsLoading(false);
+        }
+    }
+    fetchCmsContent();
+}, []);
 
     async function startRecording() {
         try {
@@ -163,6 +181,18 @@ export default function Index() {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Audio Recorder</Text>
+
+            {cmsLoading ? (
+                <ActivityIndicator size="small" color="#007AFF" style={styles.cmsLoading} />
+            ) : cmsContent ? (
+                <View style={styles.cmsContainer}>
+                    {Object.entries(cmsContent).map(([key, value]) => (
+                        <Text key={key} style={styles.cmsText}>
+                            {typeof value === 'string' ? value : JSON.stringify(value)}
+                        </Text>
+                    ))}
+                </View>
+            ) : null}
 
             <View style={styles.buttonContainer}>
                 <Pressable
@@ -267,5 +297,21 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: '600',
+    },
+    cmsLoading: {
+        marginBottom: 15,
+    },
+    cmsContainer: {
+        backgroundColor: '#F0F4FF',
+        borderRadius: 12,
+        padding: 15,
+        marginHorizontal: 20,
+        marginBottom: 15,
+        width: '90%',
+    },
+    cmsText: {
+        fontSize: 14,
+        color: '#333',
+        marginBottom: 4,
     },
 });
