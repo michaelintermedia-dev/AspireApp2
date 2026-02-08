@@ -7,16 +7,16 @@ namespace WebAPI.Services
     {
         Task<List<Recording>> GetAllRecordingsAsync();
         Task<Recording> AddRecordingAsync(string name, DateTime date);
-        //Task SaveAnalysisResultAsync(int audioId, WhisperResult result);
+        Task SaveTranscriptionAsync(string fileName, string status, DateTime processedAt, string? transcriptionData);
         Task<Device> RegisterDeviceAsync(Device device);
     }
 
     public class DbService : IDbService
     {
-        private readonly RecordingsDbContext _context;
+        private readonly RecordingsContext _context;
         private readonly ILogger<DbService> _logger;
 
-        public DbService(RecordingsDbContext context, ILogger<DbService> logger)
+        public DbService(RecordingsContext context, ILogger<DbService> logger)
         {
             _context = context;
             _logger = logger;
@@ -57,6 +57,29 @@ namespace WebAPI.Services
             catch (Exception ex)
             {
                 throw new InvalidOperationException($"Failed to add recording: {ex.Message}", ex);
+            }
+        }
+
+        public async Task SaveTranscriptionAsync(string fileName, string status, DateTime processedAt, string? transcriptionData)
+        {
+            try
+            {
+                var transcription = new Transcription
+                {
+                    Filename = fileName,
+                    Status = status,
+                    Processedat = processedAt,
+                    Transcriptiondata = transcriptionData
+                };
+
+                _context.Transcriptions.Add(transcription);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Transcription saved for file: {FileName}", fileName);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to save transcription for {fileName}: {ex.Message}", ex);
             }
         }
 

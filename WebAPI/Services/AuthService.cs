@@ -10,12 +10,12 @@ namespace WebAPI.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly RecordingsDbContext _context;
+    private readonly RecordingsContext _context;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
-        RecordingsDbContext context,
+        RecordingsContext context,
         IConfiguration configuration,
         ILogger<AuthService> logger)
     {

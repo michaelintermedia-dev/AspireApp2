@@ -25,8 +25,8 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             var descriptorsToRemove = services
                 .Where(d => d.ServiceType.Namespace != null && 
                            (d.ServiceType.Namespace.Contains("EntityFramework") ||
-                            d.ServiceType == typeof(RecordingsDbContext) ||
-                            d.ServiceType == typeof(DbContextOptions<RecordingsDbContext>)))
+                            d.ServiceType == typeof(RecordingsContext) ||
+                            d.ServiceType == typeof(DbContextOptions<RecordingsContext>)))
                 .ToList();
 
             foreach (var descriptor in descriptorsToRemove)
@@ -64,8 +64,8 @@ public class AuthEndpointsTests : IClassFixture<TestWebApplicationFactory>, IAsy
                     .Where(d => d.ServiceType.Namespace != null && 
                                (d.ServiceType.Namespace.Contains("EntityFramework") ||
                                 d.ServiceType.Namespace.Contains("Npgsql") ||
-                                d.ServiceType == typeof(RecordingsDbContext) ||
-                                d.ServiceType == typeof(DbContextOptions<RecordingsDbContext>)))
+                                d.ServiceType == typeof(RecordingsContext) ||
+                                d.ServiceType == typeof(DbContextOptions<RecordingsContext>)))
                     .ToList();
 
                 foreach (var descriptor in descriptorsToRemove)
@@ -74,7 +74,7 @@ public class AuthEndpointsTests : IClassFixture<TestWebApplicationFactory>, IAsy
                 }
 
                 // Add in-memory database for testing
-                services.AddDbContext<RecordingsDbContext>(options =>
+                services.AddDbContext<RecordingsContext>(options =>
                 {
                     options.UseInMemoryDatabase(_testDatabaseName);
                 });
@@ -90,7 +90,7 @@ public class AuthEndpointsTests : IClassFixture<TestWebApplicationFactory>, IAsy
     {
         // Clean up the in-memory database
         using var scope = _factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsContext>();
         await dbContext.Database.EnsureDeletedAsync();
     }
 
@@ -197,7 +197,7 @@ public class AuthEndpointsTests : IClassFixture<TestWebApplicationFactory>, IAsy
         string? verificationToken;
         using (var scope = _factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsContext>();
             var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == "verify@example.com");
             Assert.NotNull(user);
             Assert.False(user.Isemailverified ?? false);
@@ -213,7 +213,7 @@ public class AuthEndpointsTests : IClassFixture<TestWebApplicationFactory>, IAsy
         // 4. Check that the email is now verified
         using (var scope = _factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsContext>();
             var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == "verify@example.com");
             Assert.NotNull(user);
             Assert.True(user.Isemailverified ?? false);
@@ -247,7 +247,7 @@ public class AuthEndpointsTests : IClassFixture<TestWebApplicationFactory>, IAsy
         string? resetToken;
         using (var scope = _factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsContext>();
             var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == "reset@example.com");
             Assert.NotNull(user);
             resetToken = user.Passwordresettoken;
@@ -268,7 +268,7 @@ public class AuthEndpointsTests : IClassFixture<TestWebApplicationFactory>, IAsy
         // 5. Check that the reset token is cleared
         using (var scope = _factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsContext>();
             var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == "reset@example.com");
             Assert.NotNull(user);
             Assert.Null(user.Passwordresettoken);
@@ -378,7 +378,7 @@ public class AuthEndpointsTests : IClassFixture<TestWebApplicationFactory>, IAsy
         // 4. Verify both devices are tracked in the database
         using (var scope = _factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsContext>();
             var user = await dbContext.Users
                 .Include(u => u.Userdevices)
                 .FirstOrDefaultAsync(u => u.Email == "multidevice@example.com");
@@ -417,7 +417,7 @@ public class AuthEndpointsTests : IClassFixture<TestWebApplicationFactory>, IAsy
         // 2. Manually expire the refresh token in the database
         using (var scope = _factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsContext>();
             var session = await dbContext.Usersessions
                 .FirstOrDefaultAsync(s => s.Refreshtoken == loginResult.RefreshToken);
             
@@ -448,7 +448,7 @@ public class AuthEndpointsTests : IClassFixture<TestWebApplicationFactory>, IAsy
         DateTime? initialLoginTime;
         using (var scope = _factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsContext>();
             var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == "lastlogin@example.com");
             Assert.NotNull(user);
             initialLoginTime = user.Lastloginat;
@@ -470,7 +470,7 @@ public class AuthEndpointsTests : IClassFixture<TestWebApplicationFactory>, IAsy
         // 4. Verify LastLoginAt was updated
         using (var scope = _factory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<RecordingsContext>();
             var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == "lastlogin@example.com");
             Assert.NotNull(user);
             Assert.NotNull(user.Lastloginat);

@@ -30,9 +30,17 @@ builder.Services.AddHttpLogging(logging =>
 
 builder.AddRedisDistributedCache("redis");
 builder.AddKafkaProducer<string, string>("kafka");
+builder.AddKafkaConsumer<string, string>("kafka", consumerBuilder =>
+{
+    consumerBuilder.Config.GroupId = "webapi-transcription-consumer";
+    consumerBuilder.Config.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+    consumerBuilder.Config.EnableAutoCommit = true;
+});
+
+builder.Services.AddHostedService<TranscriptionConsumerService>();
 
 // Add PostgreSQL DbContext
-builder.Services.AddDbContext<RecordingsDbContext>(options =>
+builder.Services.AddDbContext<RecordingsContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("recordings")));
 
 builder.Services.AddOpenApi();

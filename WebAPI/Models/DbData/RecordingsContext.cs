@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace WebAPI.Models.DbData;
 
-public partial class RecordingsDbContext : DbContext
+public partial class RecordingsContext : DbContext
 {
-    public RecordingsDbContext()
+    public RecordingsContext()
     {
     }
 
-    public RecordingsDbContext(DbContextOptions<RecordingsDbContext> options)
+    public RecordingsContext(DbContextOptions<RecordingsContext> options)
         : base(options)
     {
     }
@@ -18,6 +18,8 @@ public partial class RecordingsDbContext : DbContext
     public virtual DbSet<Device> Devices { get; set; }
 
     public virtual DbSet<Recording> Recordings { get; set; }
+
+    public virtual DbSet<Transcription> Transcriptions { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 
@@ -61,6 +63,23 @@ public partial class RecordingsDbContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(150)
                 .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<Transcription>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("transcriptions_pkey");
+
+            entity.ToTable("transcriptions");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Filename)
+                .HasMaxLength(250)
+                .HasColumnName("filename");
+            entity.Property(e => e.Processedat).HasColumnName("processedat");
+            entity.Property(e => e.Status)
+                .HasMaxLength(50)
+                .HasColumnName("status");
+            entity.Property(e => e.Transcriptiondata).HasColumnName("transcriptiondata");
         });
 
         modelBuilder.Entity<User>(entity =>
