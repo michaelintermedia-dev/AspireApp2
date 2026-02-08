@@ -498,3 +498,4 @@ node_modules/
 *.key
 *.mobileprovision
 /my-mobile-test1/google-services.json
+/NotificationService/firebase-credentials.json

@@ -52,5 +52,9 @@ builder.AddProject<Projects.AudioService>("audioService")
     .WaitFor(kafka)
     .WaitFor(whisperApi);
 
+builder.AddProject<Projects.NotificationService>("notification-service")
+    .WithReference(kafka)
+    .WaitFor(kafka);
+
 builder.Build().Run();
 

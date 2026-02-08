@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AudioService\AudioService.csproj" />
     <ProjectReference Include="..\WebAPI\WebAPI.csproj" />
+    <ProjectReference Include="..\NotificationService\NotificationService.csproj" />
     <ProjectReference Include="..\UmbracoCms\UmbracoCms.csproj" />
   </ItemGroup>
 
