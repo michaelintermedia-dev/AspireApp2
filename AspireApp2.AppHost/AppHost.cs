@@ -34,10 +34,16 @@ var sqlServer = builder.AddSqlServer("sql")
 
 var umbracoDb = sqlServer.AddDatabase("umbracoDbDSN");
 
+var umbracoCms = builder.AddProject<Projects.UmbracoCms>("umbraco-cms")
+    .WithReference(umbracoDb)
+    .WithExternalHttpEndpoints()
+    .WaitFor(sqlServer);
+
 builder.AddProject<Projects.WebAPI>("webapi")
 .WithReference(redis)
 .WithReference(kafka)
 .WithReference(postgres)
+.WithReference(umbracoCms)
 .WithExternalHttpEndpoints()
 .WaitFor(kafka);
 
@@ -45,11 +51,6 @@ builder.AddProject<Projects.AudioService>("audioService")
     .WithReference(kafka)
     .WaitFor(kafka)
     .WaitFor(whisperApi);
-
-builder.AddProject<Projects.UmbracoCms>("umbraco-cms")
-    .WithReference(umbracoDb)
-    .WithExternalHttpEndpoints()
-    .WaitFor(sqlServer);
 
 builder.Build().Run();
 
