@@ -27,6 +27,12 @@ var whisperApi = builder.AddContainer("whisper-api", "whisper-api")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithExternalHttpEndpoints();
 
+// SQL Server for Umbraco CMS
+var sqlServer = builder.AddSqlServer("sql")
+    .WithDataVolume()
+    .WithLifetime(ContainerLifetime.Persistent);
+
+var umbracoDb = sqlServer.AddDatabase("umbracoDbDSN");
 
 builder.AddProject<Projects.WebAPI>("webapi")
 .WithReference(redis)
@@ -39,6 +45,11 @@ builder.AddProject<Projects.AudioService>("audioService")
     .WithReference(kafka)
     .WaitFor(kafka)
     .WaitFor(whisperApi);
+
+builder.AddProject<Projects.UmbracoCms>("umbraco-cms")
+    .WithReference(umbracoDb)
+    .WithExternalHttpEndpoints()
+    .WaitFor(sqlServer);
 
 builder.Build().Run();
 

@@ -11,12 +11,14 @@
   <ItemGroup>
     <ProjectReference Include="..\AudioService\AudioService.csproj" />
     <ProjectReference Include="..\WebAPI\WebAPI.csproj" />
+    <ProjectReference Include="..\UmbracoCms\UmbracoCms.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.Kafka" Version="13.1.0" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.1.0" />
     <PackageReference Include="Aspire.Hosting.Redis" Version="13.1.0" />
+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="13.1.0" />
   </ItemGroup>
 
 </Project>
