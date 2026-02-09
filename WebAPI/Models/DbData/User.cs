@@ -9,29 +9,31 @@ public partial class User
 
     public string Email { get; set; } = null!;
 
-    public string Passwordhash { get; set; } = null!;
+    public string PasswordHash { get; set; } = null!;
 
-    public string Passwordsalt { get; set; } = null!;
+    public string PasswordSalt { get; set; } = null!;
 
-    public string? Firstname { get; set; }
+    public string? FirstName { get; set; }
 
-    public string? Lastname { get; set; }
+    public string? LastName { get; set; }
 
-    public bool? Isemailverified { get; set; }
+    public bool IsEmailVerified { get; set; }
 
-    public string? Emailverificationtoken { get; set; }
+    public string? EmailVerificationToken { get; set; }
 
-    public string? Passwordresettoken { get; set; }
+    public string? PasswordResetToken { get; set; }
 
-    public DateTime? Passwordresettokenexpiry { get; set; }
+    public DateTime? PasswordResetTokenExpiry { get; set; }
 
-    public DateTime? Createdat { get; set; }
+    public DateTime CreatedAt { get; set; }
 
-    public DateTime? Updatedat { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
-    public DateTime? Lastloginat { get; set; }
+    public DateTime? LastLoginAt { get; set; }
 
-    public virtual ICollection<Userdevice> Userdevices { get; set; } = new List<Userdevice>();
+    public virtual ICollection<Recording> Recordings { get; set; } = new List<Recording>();
 
-    public virtual ICollection<Usersession> Usersessions { get; set; } = new List<Usersession>();
+    public virtual ICollection<UserDevice> UserDevices { get; set; } = new List<UserDevice>();
+
+    public virtual ICollection<UserSession> UserSessions { get; set; } = new List<UserSession>();
 }

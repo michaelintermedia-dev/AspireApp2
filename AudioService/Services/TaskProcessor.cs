@@ -4,6 +4,11 @@ using Microsoft.Extensions.Logging;
 
 namespace AudioService.Services;
 
+public interface ITaskProcessor
+{
+    Task ProcessAsync(CancellationToken cancellationToken, string fileName);
+}
+
 public class TaskProcessor : ITaskProcessor
 {
     private readonly ILogger<TaskProcessor> _logger;

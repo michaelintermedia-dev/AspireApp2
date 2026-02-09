@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using WebAPI.Models;
 using WebAPI.Models.DbData;
 
@@ -6,37 +7,47 @@ namespace WebAPI.Services
 {
     public interface IDeviceService
     {
-        Task RegisterDeviceAsync(string token, string platform);
+        Task RegisterDeviceAsync(int userId, string token, string platform);
     }
     public class DeviceService : IDeviceService
     {
-        private readonly IDbService _dbService;
+        private readonly Recordings2Context _context;
         private readonly IMessaging _messaging;
 
-        public DeviceService(IDbService dbService, IMessaging messaging)
+        public DeviceService(Recordings2Context context, IMessaging messaging)
         {
-            _dbService = dbService;
+            _context = context;
             _messaging = messaging;
         }
-        public async Task RegisterDeviceAsync(string token, string platform)
+        public async Task RegisterDeviceAsync(int userId, string token, string platform)
         {
-            var device = new Device
-            {
-                Id = 0,
-                Token = token,
-                Platform = platform,
-                RegisteredAt = DateTime.UtcNow,
-                LastUsedAt = DateTime.UtcNow
-            };
+            var existingDevice = await _context.UserDevices
+                .FirstOrDefaultAsync(d => d.UserId == userId && d.DeviceToken == token);
 
-            await _dbService.RegisterDeviceAsync(device);
+            if (existingDevice != null)
+            {
+                existingDevice.LastActiveAt = DateTime.UtcNow;
+            }
+            else
+            {
+                _context.UserDevices.Add(new UserDevice
+                {
+                    UserId = userId,
+                    DeviceToken = token,
+                    Platform = platform,
+                    LastActiveAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            await _context.SaveChangesAsync();
 
             var message = JsonSerializer.Serialize(new UserRegisteredEvent 
             {
-                DeviceToken =  token, 
+                DeviceToken = token, 
                 Platform = platform, 
                 RegisteredAt = DateTime.UtcNow, 
-                UserId = "0" 
+                UserId = userId.ToString() 
             });
 
             await _messaging.SendMessageAsync("user.registered", message);

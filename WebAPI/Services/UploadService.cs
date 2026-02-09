@@ -2,7 +2,7 @@
 
 public interface IUploadService
 {
-    Task<(bool Success, string Message, int? RecordingId)> UploadAudioAsync(IFormFile file);
+    Task<(bool Success, string Message, int? RecordingId)> UploadAudioAsync(int userId, IFormFile file);
 }
 
 public class UploadService : IUploadService
@@ -18,7 +18,7 @@ public class UploadService : IUploadService
         _uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
     }
 
-    public async Task<(bool Success, string Message, int? RecordingId)> UploadAudioAsync(IFormFile file)
+    public async Task<(bool Success, string Message, int? RecordingId)> UploadAudioAsync(int userId, IFormFile file)
     {
         try
         {
@@ -42,7 +42,7 @@ public class UploadService : IUploadService
             }
 
             // Save metadata to database using DbService
-            var recording = await _dbService.AddRecordingAsync(file.FileName, DateTime.UtcNow);
+            var recording = await _dbService.AddRecordingAsync(userId, file.FileName);
             await _messaging.SendMessage1Async(recording.Id, file.FileName);
 
             return (true, "Uploaded successfully!", recording.Id);

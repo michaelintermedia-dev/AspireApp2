@@ -1,6 +1,8 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { AuthService, LoginRequest, RegisterRequest } from '../services/AuthService';
 import { TokenService } from '../services/TokenService';
+import { registerForPushNotifications } from '../../api/notifications';
+import { registerDeviceWithBackend } from '../../api/devices';
 
 interface User {
   id: number;
@@ -18,6 +20,18 @@ interface AuthContextType {
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+async function registerDevice() {
+  try {
+    const fcmToken = await registerForPushNotifications();
+    if (fcmToken) {
+      await registerDeviceWithBackend(fcmToken);
+      console.log('[AuthContext] Device registered for push notifications');
+    }
+  } catch (error) {
+    console.error('[AuthContext] Device registration failed:', error);
+  }
+}
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -45,6 +59,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             id: userId,
             email: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || decoded.email,
           });
+
+          // Register device when user is already logged in
+          registerDevice();
         }
       } else {
         // Token expired or doesn't exist
@@ -68,6 +85,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         id: response.userId,
         email: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || decoded.email,
       });
+
+      // Register device right after login
+      registerDevice();
     } catch (error) {
       console.error('[AuthContext] Login error:', error);
       throw error;
@@ -84,6 +104,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         id: parseInt(userId, 10),
         email: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || decoded.email,
       });
+
+      // Register device right after registration
+      registerDevice();
     } catch (error) {
       console.error('[AuthContext] Register error:', error);
       throw error;

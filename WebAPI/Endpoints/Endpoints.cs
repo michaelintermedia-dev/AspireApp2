@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using WebAPI.Services;
 
 namespace WebAPI.Endpoints.Endpoints;
@@ -22,8 +23,14 @@ public static class Endpoints
                 return Results.BadRequest(new { message = "No file provided" });
             }
 
+            var userIdClaim = request.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
             var file = form.Files[0];
-            var (success, message, recordingId) = await uploadService.UploadAudioAsync(file);
+            var (success, message, recordingId) = await uploadService.UploadAudioAsync(userId, file);
 
             if (!success)
             {
@@ -34,11 +41,17 @@ public static class Endpoints
         })
             .RequireAuthorization();
 
-        app.MapGet("/GetRecordings", async (IDbService dbService) =>
+        app.MapGet("/GetRecordings", async (HttpContext httpContext, IDbService dbService) =>
         {
+            var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
             try
             {
-                var recordings = await dbService.GetAllRecordingsAsync();
+                var recordings = await dbService.GetRecordingsByUserAsync(userId);
                 return Results.Ok(recordings);
             }
             catch (Exception ex)
@@ -78,9 +91,15 @@ public static class Endpoints
         })
             .RequireAuthorization();
 
-        app.MapPost("/devices/register", async (RegisterDeviceRequest request, [FromServices] IDeviceService deviceService) =>
+        app.MapPost("/devices/register", async (HttpContext httpContext, RegisterDeviceRequest request, [FromServices] IDeviceService deviceService) =>
         {
-            await deviceService.RegisterDeviceAsync(request.token, request.platform);
+            var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            await deviceService.RegisterDeviceAsync(userId, request.token, request.platform);
             return Results.Ok(new { success = true });
         })
             .RequireAuthorization();

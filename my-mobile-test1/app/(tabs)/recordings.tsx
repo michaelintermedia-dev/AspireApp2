@@ -1,7 +1,9 @@
 ﻿import { useAudioPlayer } from 'expo-audio';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { getApiUrl, apiGet } from '../../api/client';
+import { getApiUrl } from '../../api/client';
+import { AuthenticatedApiClient } from '../../auth/services/AuthenticatedApiClient';
+import { TokenService } from '../../auth/services/TokenService';
 
 interface Recording {
     id: number;
@@ -26,7 +28,7 @@ export default function RecordingsScreen() {
             setError(null);
 
             console.log('[Recordings] Fetching list...');
-            const data = await apiGet<Recording[]>('/GetRecordings');
+            const data = await AuthenticatedApiClient.get<Recording[]>('/GetRecordings');
             
             setRecordings(data);
             console.log('[Recordings] Fetched:', data.length, 'items');
@@ -48,11 +50,14 @@ export default function RecordingsScreen() {
             console.log('[Playback] Starting download:', recording.name);
 
             const apiUrl = getApiUrl(`/DownloadAudio/${recording.name}`);
+            const token = await TokenService.getToken();
             console.log('[Playback] URL:', apiUrl);
 
             if (Platform.OS === 'web') {
-                // On web, download as blob and create object URL
-                const response = await fetch(apiUrl);
+                // On web, download as blob with auth header and create object URL
+                const response = await fetch(apiUrl, {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                });
 
                 if (!response.ok) {
                     throw new Error(`Download failed: ${response.status}`);
@@ -63,8 +68,11 @@ export default function RecordingsScreen() {
 
                 player.replace(audioUrl);
             } else {
-                // On native, use the URL directly - expo-audio can handle remote URLs
-                player.replace(apiUrl);
+                // On native, pass auth headers via AudioSource object
+                player.replace({
+                    uri: apiUrl,
+                    ...(token && { headers: { 'Authorization': `Bearer ${token}` } }),
+                });
             }
 
             player.play();

@@ -7,7 +7,13 @@ public partial class Recording
 {
     public int Id { get; set; }
 
+    public int UserId { get; set; }
+
     public string Name { get; set; } = null!;
 
-    public DateTime Date { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    public virtual ICollection<Transcription> Transcriptions { get; set; } = new List<Transcription>();
+
+    public virtual User User { get; set; } = null!;
 }

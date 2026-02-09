@@ -3,40 +3,14 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { useEffect } from 'react';
 
-import { setupNotificationHandler, registerForPushNotifications, registerDeviceWithBackend } from '../api/notifications';
+import { setupNotificationHandler, registerForPushNotifications } from '../api/notifications';
 import { AuthProvider } from '../auth/context/AuthContext';
-
-async function initializePushNotifications() {
-  try {
-    console.log('[App] Initializing push notifications...');
-    
-    // Step 1: Get FCM token
-    const token = await registerForPushNotifications();
-    
-    if (!token) {
-      console.log('[App] Could not obtain push token (device might not support it)');
-      return;
-    }
-
-    console.log('[App] Got token, attempting backend register...');
-
-    // Step 2: Register device with backend
-    const registered = await registerDeviceWithBackend(token);
-    
-    if (registered) {
-      console.log('[App] ✅ Push notifications initialized successfully');
-    } else {
-      console.log('[App] ⚠️ Push notifications registered locally but backend registration failed');
-    }
-  } catch (error) {
-    console.error('[App] Failed to initialize push notifications:', error);
-  }
-}
 
 export default function RootLayout() {
   useEffect(() => {
     setupNotificationHandler();
-    initializePushNotifications();
+    // Request push permissions early; device registration happens after auth in AuthContext
+    registerForPushNotifications();
   }, []);
 
   return (

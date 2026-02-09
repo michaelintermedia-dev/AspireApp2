@@ -29,30 +29,33 @@ namespace NotificationService.Services.MessageHandlers
                     return;
                 }
 
-                if (@event.DeviceTokens.Count == 0)
+                if (@event.DeviceToken.Length == 0)
                 {
-                    _logger.LogWarning("Audio analysis event has no device tokens for user: {userId}", @event.UserId);
+                    _logger.LogWarning("Audio analysis event has no device token for user: {userId}", @event.UserId);
                     return;
                 }
 
                 var notificationData = new Dictionary<string, string>
                 {
                     { "event_type", "audio_analysis_completed" },
-                    { "audio_id", @event.AudioId },
+                    { "audio_id", @event.AudioId},
                     { "user_id", @event.UserId }
+                    //{ "transcriptionData", @event..transcriptionData }
                 };
 
-                await _fcmService.SendMulticastAsync(
-                    @event.DeviceTokens,
-                    "Audio Analysis Complete",
-                    $"Your audio analysis is ready: {@event.AnalysisResult}",
-                    notificationData,
-                    cancellationToken);
+                //await _fcmService.SendMulticastAsync(
+                //    @event.DeviceTokens,
+                //    "Audio Analysis Complete",
+                //    $"Your audio analysis is ready: {@event.AnalysisResult}",
+                //    notificationData,
+                //    cancellationToken);
+
+                await _fcmService.SendNotificationAsync(@event.DeviceToken, "Audio Analysis Complete", $"Your audio analysis is ready: {@event.AnalysisResult}", notificationData, cancellationToken);
 
                 _logger.LogInformation(
-                    "Audio analysis notification sent to user: {userId} on {deviceCount} devices",
+                    "Audio analysis notification sent to user: {userId} on {DeviceToken} devices",
                     @event.UserId,
-                    @event.DeviceTokens.Count);
+                    @event.DeviceToken);
             }
             catch (Exception ex)
             {

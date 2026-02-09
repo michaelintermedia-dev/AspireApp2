@@ -17,7 +17,7 @@ var postgres = builder.AddPostgres("postgres")
 })
 .WithHostPort(5432)
 .WithLifetime(ContainerLifetime.Persistent)
-.AddDatabase("recordings");
+.AddDatabase("recordings2");
 
 var whisperApi = builder.AddContainer("whisper-api", "whisper-api")
     .WithDockerfile("../whisper-api")  // Path to your whisper-api folder

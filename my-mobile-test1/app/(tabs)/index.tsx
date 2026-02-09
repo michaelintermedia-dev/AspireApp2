@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 //import '../../firebase';
 import { apiGet, getApiUrl } from '../../api/client';
+import { TokenService } from '../../auth/services/TokenService';
 
 function RecordingItem({ uri, index }: { uri: string; index: number }) {
     const player = useAudioPlayer(uri);
@@ -31,6 +32,7 @@ function RecordingItem({ uri, index }: { uri: string; index: number }) {
             }
 
             const apiUrl = getApiUrl('/UploadAudio');
+            const token = await TokenService.getToken();
             console.log('[Upload] Uploading to:', apiUrl);
 
             // Create abort controller for timeout
@@ -42,6 +44,7 @@ function RecordingItem({ uri, index }: { uri: string; index: number }) {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
+                        ...(token && { 'Authorization': `Bearer ${token}` }),
                     },
                     body: formData,
                     signal: controller.signal,

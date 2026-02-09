@@ -85,8 +85,8 @@ public class EndpointsTestFactory : WebApplicationFactory<Program>
                 .Where(d => d.ServiceType.Namespace != null &&
                            (d.ServiceType.Namespace.Contains("EntityFramework") ||
                             d.ServiceType.Namespace.Contains("Npgsql") ||
-                            d.ServiceType == typeof(RecordingsContext) ||
-                            d.ServiceType == typeof(DbContextOptions<RecordingsContext>)))
+                            d.ServiceType == typeof(Recordings2Context) ||
+                            d.ServiceType == typeof(DbContextOptions<Recordings2Context>)))
                 .ToList();
 
             foreach (var descriptor in descriptorsToRemove)
@@ -108,7 +108,7 @@ public class EndpointsTestFactory : WebApplicationFactory<Program>
 
             // In-memory database
             var dbName = $"TestDb_{Guid.NewGuid()}";
-            services.AddDbContext<RecordingsContext>(options =>
+            services.AddDbContext<Recordings2Context>(options =>
                 options.UseInMemoryDatabase(dbName));
         });
     }
@@ -153,9 +153,9 @@ public class EndpointsTests : IClassFixture<EndpointsTestFactory>
         // Seed data
         using (var scope = _factory.Services.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<RecordingsContext>();
-            db.Recordings.Add(new Recording { Name = "test-recording.m4a", Date = DateTime.UtcNow });
-            db.Recordings.Add(new Recording { Name = "another-recording.m4a", Date = DateTime.UtcNow.AddMinutes(-5) });
+            var db = scope.ServiceProvider.GetRequiredService<Recordings2Context>();
+            db.Recordings.Add(new Recording { Name = "test-recording.m4a", CreatedAt = DateTime.UtcNow, UserId = 1 });
+            db.Recordings.Add(new Recording { Name = "another-recording.m4a", CreatedAt = DateTime.UtcNow.AddMinutes(-5), UserId = 1 });
             await db.SaveChangesAsync();
         }
 
@@ -276,8 +276,8 @@ public class EndpointsTests : IClassFixture<EndpointsTestFactory>
 
         // Verify device was saved to DB
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<RecordingsContext>();
-        var device = await db.Devices.FirstOrDefaultAsync(d => d.Token == "device-token-123");
+        var db = scope.ServiceProvider.GetRequiredService<Recordings2Context>();
+        var device = await db.UserDevices.FirstOrDefaultAsync(d => d.DeviceToken == "device-token-123");
         Assert.NotNull(device);
         Assert.Equal("iOS", device.Platform);
 
@@ -301,7 +301,7 @@ public class EndpointsTests : IClassFixture<EndpointsTestFactory>
 
     // Response DTOs
     private record UploadResponse(string Message, int? RecordingId);
-    private record RecordingDto(int Id, string Name, DateTime Date);
+    private record RecordingDto(int Id, string Name, DateTime CreatedAt);
 }
 
 #endregion
@@ -343,16 +343,16 @@ public class CmsEndpointsTests : IClassFixture<EndpointsTestFactory>
 
 public class DbServiceTests : IAsyncLifetime
 {
-    private RecordingsContext _context = null!;
+    private Recordings2Context _context = null!;
     private DbService _dbService = null!;
 
     public Task InitializeAsync()
     {
-        var options = new DbContextOptionsBuilder<RecordingsContext>()
+        var options = new DbContextOptionsBuilder<Recordings2Context>()
             .UseInMemoryDatabase($"DbServiceTests_{Guid.NewGuid()}")
             .Options;
 
-        _context = new RecordingsContext(options);
+        _context = new Recordings2Context(options);
 
         var logger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<DbService>();
         _dbService = new DbService(_context, logger);
@@ -367,21 +367,21 @@ public class DbServiceTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task GetAllRecordingsAsync_ShouldReturnEmpty_WhenNoData()
+    public async Task GetRecordingsByUserAsync_ShouldReturnEmpty_WhenNoData()
     {
-        var result = await _dbService.GetAllRecordingsAsync();
+        var result = await _dbService.GetRecordingsByUserAsync(1);
         Assert.Empty(result);
     }
 
     [Fact]
-    public async Task GetAllRecordingsAsync_ShouldReturnOrderedByDateDescending()
+    public async Task GetRecordingsByUserAsync_ShouldReturnOrderedByDateDescending()
     {
-        var older = new Recording { Name = "old.m4a", Date = DateTime.UtcNow.AddDays(-1) };
-        var newer = new Recording { Name = "new.m4a", Date = DateTime.UtcNow };
+        var older = new Recording { Name = "old.m4a", CreatedAt = DateTime.UtcNow.AddDays(-1), UserId = 1 };
+        var newer = new Recording { Name = "new.m4a", CreatedAt = DateTime.UtcNow, UserId = 1 };
         _context.Recordings.AddRange(older, newer);
         await _context.SaveChangesAsync();
 
-        var result = await _dbService.GetAllRecordingsAsync();
+        var result = await _dbService.GetRecordingsByUserAsync(1);
 
         Assert.Equal(2, result.Count);
         Assert.Equal("new.m4a", result[0].Name);
@@ -391,7 +391,7 @@ public class DbServiceTests : IAsyncLifetime
     [Fact]
     public async Task AddRecordingAsync_ShouldPersistAndReturn()
     {
-        var result = await _dbService.AddRecordingAsync("test.m4a", DateTime.UtcNow);
+        var result = await _dbService.AddRecordingAsync(1, "test.m4a");
 
         Assert.True(result.Id > 0);
         Assert.Equal("test.m4a", result.Name);
@@ -403,33 +403,26 @@ public class DbServiceTests : IAsyncLifetime
     [Fact]
     public async Task SaveTranscriptionAsync_ShouldPersist()
     {
+        // Seed a recording so the transcription can link to it
+        _context.Recordings.Add(new Recording { Name = "audio.m4a", CreatedAt = DateTime.UtcNow, UserId = 1 });
+        await _context.SaveChangesAsync();
+
         var processedAt = DateTime.UtcNow;
         await _dbService.SaveTranscriptionAsync("audio.m4a", "success", processedAt, "Hello world");
 
         var transcription = await _context.Transcriptions.FirstOrDefaultAsync(t => t.Filename == "audio.m4a");
         Assert.NotNull(transcription);
-        Assert.Equal("success", transcription.Status);
-        Assert.Equal("Hello world", transcription.Transcriptiondata);
-        Assert.Equal(processedAt, transcription.Processedat);
+        Assert.Equal("Hello world", transcription.TranscriptionData);
+        Assert.Equal(processedAt, transcription.ProcessedAt);
     }
 
     [Fact]
-    public async Task RegisterDeviceAsync_ShouldPersistAndReturn()
+    public async Task AddRecordingAsync_ShouldSetUserId()
     {
-        var device = new Device
-        {
-            Token = "token-abc",
-            Platform = "Android",
-            RegisteredAt = DateTime.UtcNow,
-            LastUsedAt = DateTime.UtcNow
-        };
-
-        var result = await _dbService.RegisterDeviceAsync(device);
+        var result = await _dbService.AddRecordingAsync(42, "user-test.m4a");
 
         Assert.True(result.Id > 0);
-        var inDb = await _context.Devices.FindAsync(result.Id);
-        Assert.NotNull(inDb);
-        Assert.Equal("token-abc", inDb.Token);
+        Assert.Equal(42, result.UserId);
     }
 }
 

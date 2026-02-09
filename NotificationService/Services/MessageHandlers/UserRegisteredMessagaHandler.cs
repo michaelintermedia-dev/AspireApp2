@@ -41,13 +41,6 @@ namespace NotificationService.Services.MessageHandlers
                     { "user_id", @event.UserId }
                 };
 
-                //await _fcmService.SendMulticastAsync(
-                //    @event.DeviceTokens,
-                //    "Welcome",
-                //    "Your account has been registered successfully",
-                //    notificationData,
-                //    cancellationToken);
-
                 await _fcmService.SendNotificationAsync(@event.DeviceToken, "Welcome", "Your account has been registered successfully", notificationData, cancellationToken);
 
                 _logger.LogInformation(

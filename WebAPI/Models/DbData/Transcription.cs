@@ -7,11 +7,15 @@ public partial class Transcription
 {
     public int Id { get; set; }
 
+    public int RecordingId { get; set; }
+
     public string Filename { get; set; } = null!;
 
-    public string Status { get; set; } = null!;
+    public string? TranscriptionData { get; set; }
 
-    public DateTime? Processedat { get; set; }
+    public DateTime? ProcessedAt { get; set; }
 
-    public string? Transcriptiondata { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    public virtual Recording Recording { get; set; } = null!;
 }

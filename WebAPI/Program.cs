@@ -40,7 +40,7 @@ builder.AddKafkaConsumer<string, string>("kafka", consumerBuilder =>
 builder.Services.AddHostedService<TranscriptionConsumerService>();
 
 // Add PostgreSQL DbContext
-builder.Services.AddDbContext<RecordingsContext>(options =>
+builder.Services.AddDbContext<Recordings2Context>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("recordings")));
 
 builder.Services.AddOpenApi();
