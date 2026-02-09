@@ -31,7 +31,8 @@ public static class Endpoints
             }
 
             return Results.Ok(new { message, recordingId });
-        });
+        })
+            .RequireAuthorization();
 
         app.MapGet("/GetRecordings", async (IDbService dbService) =>
         {
@@ -44,7 +45,8 @@ public static class Endpoints
             {
                 return Results.BadRequest(new { message = ex.Message });
             }
-        });
+        })
+            .RequireAuthorization();
 
         app.MapGet("/DownloadAudio/{filename}", (string filename) =>
         {
@@ -73,13 +75,15 @@ public static class Endpoints
             {
                 return Results.BadRequest(new { message = $"Download failed: {ex.Message}" });
             }
-        });
+        })
+            .RequireAuthorization();
 
         app.MapPost("/devices/register", async (RegisterDeviceRequest request, [FromServices] IDeviceService deviceService) =>
         {
             await deviceService.RegisterDeviceAsync(request.token, request.platform);
             return Results.Ok(new { success = true });
-        });
+        })
+            .RequireAuthorization();
     }
 }
 

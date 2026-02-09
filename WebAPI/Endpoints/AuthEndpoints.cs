@@ -9,9 +9,7 @@ public static class AuthEndpoints
     {
         var auth = app.MapGroup("/auth").WithTags("Authentication");
 
-        auth.MapPost("/register", async (
-            RegisterRequest request,
-            [FromServices] IAuthService authService) =>
+        auth.MapPost("/register", async (RegisterRequest request, [FromServices] IAuthService authService) =>
         {
             var (success, token, refreshToken, message) = await authService.RegisterAsync(
                 request.Email,
@@ -31,9 +29,7 @@ public static class AuthEndpoints
             });
         });
 
-        auth.MapPost("/login", async (
-            LoginRequest request,
-            [FromServices] IAuthService authService) =>
+        auth.MapPost("/login", async (LoginRequest request, [FromServices] IAuthService authService) =>
         {
             var (success, token, refreshToken, message, userId) = await authService.LoginAsync(
                 request.Email,
@@ -54,9 +50,7 @@ public static class AuthEndpoints
             });
         });
 
-        auth.MapPost("/refresh", async (
-            RefreshTokenRequest request,
-            [FromServices] IAuthService authService) =>
+        auth.MapPost("/refresh", async (RefreshTokenRequest request, [FromServices] IAuthService authService) =>
         {
             var (success, token, refreshToken, message) = await authService.RefreshTokenAsync(
                 request.RefreshToken
@@ -68,33 +62,25 @@ public static class AuthEndpoints
             return Results.Ok(new { token, refreshToken });
         });
 
-        auth.MapPost("/logout", async (
-            LogoutRequest request,
-            [FromServices] IAuthService authService) =>
+        auth.MapPost("/logout", async (LogoutRequest request, [FromServices] IAuthService authService) =>
         {
             await authService.LogoutAsync(request.UserId, request.RefreshToken);
             return Results.Ok(new { message = "Logged out successfully" });
         });
 
-        auth.MapPost("/verify-email", async (
-            string token,
-            [FromServices] IAuthService authService) =>
+        auth.MapPost("/verify-email", async (string token, [FromServices] IAuthService authService) =>
         {
             var success = await authService.VerifyEmailAsync(token);
             return success ? Results.Ok() : Results.BadRequest();
         });
 
-        auth.MapPost("/forgot-password", async (
-            ForgotPasswordRequest request,
-            [FromServices] IAuthService authService) =>
+        auth.MapPost("/forgot-password", async (ForgotPasswordRequest request, [FromServices] IAuthService authService) =>
         {
             await authService.RequestPasswordResetAsync(request.Email);
             return Results.Ok(new { message = "Password reset email sent" });
         });
 
-        auth.MapPost("/reset-password", async (
-            ResetPasswordRequest request,
-            [FromServices] IAuthService authService) =>
+        auth.MapPost("/reset-password", async (ResetPasswordRequest request, [FromServices] IAuthService authService) =>
         {
             var success = await authService.ResetPasswordAsync(request.Token, request.NewPassword);
             return success ? Results.Ok() : Results.BadRequest();
