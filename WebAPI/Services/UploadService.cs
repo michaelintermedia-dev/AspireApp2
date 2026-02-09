@@ -43,7 +43,11 @@ public class UploadService : IUploadService
 
             // Save metadata to database using DbService
             var recording = await _dbService.AddRecordingAsync(userId, file.FileName);
-            await _messaging.SendMessage1Async(recording.Id, file.FileName);
+
+            // Retrieve user's device tokens so downstream services can notify the user
+            var deviceTokens = await _dbService.GetUserDeviceTokensAsync(userId);
+
+            await _messaging.SendMessage1Async(recording.Id, file.FileName, deviceTokens);
 
             return (true, "Uploaded successfully!", recording.Id);
         }

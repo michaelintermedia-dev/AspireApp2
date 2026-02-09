@@ -38,7 +38,7 @@ public class AudioProcessingService(ILogger<AudioProcessingService> logger, ICon
                     using (var scope = serviceProvider.CreateScope())
                     {
                         var taskProcessor = scope.ServiceProvider.GetRequiredService<ITaskProcessor>();
-                        await taskProcessor.ProcessAsync(stoppingToken, message.FilePath);
+                        await taskProcessor.ProcessAsync(stoppingToken, message.FilePath, message.DeviceTokens);
                     }
 
                     _processCount++;

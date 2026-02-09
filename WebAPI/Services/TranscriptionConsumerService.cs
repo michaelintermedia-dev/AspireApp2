@@ -76,7 +76,8 @@ public class TranscriptionConsumerService(
 }
 
 public record TranscriptionNotification(
-    string FileName,
-    string Status,
-    DateTime ProcessedAt,
-    string? TranscriptionData);
+string FileName,
+string Status,
+DateTime ProcessedAt,
+string? TranscriptionData,
+List<string>? DeviceTokens);

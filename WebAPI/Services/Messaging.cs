@@ -5,7 +5,7 @@ namespace WebAPI.Services
 {
     public interface IMessaging
     {
-        Task SendMessage1Async(int audioId, string filePath); 
+        Task SendMessage1Async(int audioId, string filePath, List<string> deviceTokens); 
         Task SendMessageAsync(string topic, string message);
     }
 
@@ -38,7 +38,7 @@ namespace WebAPI.Services
             _producer = new ProducerBuilder<string, string>(config).Build();
         }
 
-        public async Task SendMessage1Async(int audioId, string filePath)
+        public async Task SendMessage1Async(int audioId, string filePath, List<string> deviceTokens)
         {
             try
             {
@@ -46,7 +46,8 @@ namespace WebAPI.Services
                 {
                     audioId = audioId,
                     filePath = filePath,
-                    timestamp = DateTime.UtcNow
+                    timestamp = DateTime.UtcNow,
+                    deviceTokens = deviceTokens
                 };
 
                 var result = await _producer.ProduceAsync(

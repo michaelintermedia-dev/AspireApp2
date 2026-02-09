@@ -1,8 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using NotificationService.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Text.Json;
 
 namespace NotificationService.Services.MessageHandlers
@@ -29,33 +26,47 @@ namespace NotificationService.Services.MessageHandlers
                     return;
                 }
 
-                if (@event.DeviceToken.Length == 0)
+                if (@event.DeviceTokens.Count == 0)
                 {
-                    _logger.LogWarning("Audio analysis event has no device token for user: {userId}", @event.UserId);
+                    _logger.LogWarning("Audio analysis event has no device tokens for file: {FileName}", @event.FileName);
                     return;
                 }
 
                 var notificationData = new Dictionary<string, string>
                 {
                     { "event_type", "audio_analysis_completed" },
-                    { "audio_id", @event.AudioId},
-                    { "user_id", @event.UserId }
-                    //{ "transcriptionData", @event..transcriptionData }
+                    { "file_name", @event.FileName },
+                    { "status", @event.Status }
                 };
 
-                //await _fcmService.SendMulticastAsync(
-                //    @event.DeviceTokens,
-                //    "Audio Analysis Complete",
-                //    $"Your audio analysis is ready: {@event.AnalysisResult}",
-                //    notificationData,
-                //    cancellationToken);
+                var title = "Audio Analysis Complete";
+                var body = @event.Status == "success"
+                    ? $"Your audio '{@event.FileName}' has been transcribed."
+                    : $"Processing of '{@event.FileName}' finished with status: {@event.Status}";
 
-                await _fcmService.SendNotificationAsync(@event.DeviceToken, "Audio Analysis Complete", $"Your audio analysis is ready: {@event.AnalysisResult}", notificationData, cancellationToken);
+                if (@event.DeviceTokens.Count == 1)
+                {
+                    await _fcmService.SendNotificationAsync(
+                        @event.DeviceTokens[0],
+                        title,
+                        body,
+                        notificationData,
+                        cancellationToken);
+                }
+                else
+                {
+                    await _fcmService.SendMulticastAsync(
+                        @event.DeviceTokens,
+                        title,
+                        body,
+                        notificationData,
+                        cancellationToken);
+                }
 
                 _logger.LogInformation(
-                    "Audio analysis notification sent to user: {userId} on {DeviceToken} devices",
-                    @event.UserId,
-                    @event.DeviceToken);
+                    "Audio analysis notification sent for file: {FileName} to {TokenCount} device(s)",
+                    @event.FileName,
+                    @event.DeviceTokens.Count);
             }
             catch (Exception ex)
             {

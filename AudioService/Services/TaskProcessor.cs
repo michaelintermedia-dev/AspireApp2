@@ -6,7 +6,7 @@ namespace AudioService.Services;
 
 public interface ITaskProcessor
 {
-    Task ProcessAsync(CancellationToken cancellationToken, string fileName);
+    Task ProcessAsync(CancellationToken cancellationToken, string fileName, List<string> deviceTokens);
 }
 
 public class TaskProcessor : ITaskProcessor
@@ -22,7 +22,7 @@ public class TaskProcessor : ITaskProcessor
         _kafkaProducer = kafkaProducer;
     }
 
-    public async Task ProcessAsync(CancellationToken cancellationToken, string fileName)
+    public async Task ProcessAsync(CancellationToken cancellationToken, string fileName, List<string> deviceTokens)
     {
         _logger.LogInformation("----> Processing audio tasks started");
         var stopwatch = Stopwatch.StartNew();
@@ -31,7 +31,7 @@ public class TaskProcessor : ITaskProcessor
         {
             // Add your audio processing logic here
             var transcriptionResponse = await PerformAudioProcessing(cancellationToken, fileName);
-            await PublishProcessingNotification(fileName, "success", transcriptionResponse, cancellationToken);
+            await PublishProcessingNotification(fileName, "success", transcriptionResponse, deviceTokens, cancellationToken);
 
             stopwatch.Stop();
             _logger.LogInformation("----> Processing audio tasks completed successfully in {milliseconds}ms", stopwatch.ElapsedMilliseconds);
@@ -107,7 +107,7 @@ public class TaskProcessor : ITaskProcessor
         }
     }
 
-    private async Task PublishProcessingNotification(string fileName, string status, string transcriptionData, CancellationToken cancellationToken)
+    private async Task PublishProcessingNotification(string fileName, string status, string transcriptionData, List<string> deviceTokens, CancellationToken cancellationToken)
     {
         try
         {
@@ -116,7 +116,8 @@ public class TaskProcessor : ITaskProcessor
                 fileName,
                 status,
                 processedAt = DateTime.UtcNow,
-                transcriptionData
+                transcriptionData,
+                deviceTokens
             };
 
             var jsonMessage = System.Text.Json.JsonSerializer.Serialize(notificationMessage);

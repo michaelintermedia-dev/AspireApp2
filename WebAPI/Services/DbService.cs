@@ -8,6 +8,7 @@ namespace WebAPI.Services
         Task<List<Recording>> GetRecordingsByUserAsync(int userId);
         Task<Recording> AddRecordingAsync(int userId, string name);
         Task SaveTranscriptionAsync(string fileName, string status, DateTime processedAt, string? transcriptionData);
+        Task<List<string>> GetUserDeviceTokensAsync(int userId);
     }
 
     public class DbService : IDbService
@@ -70,7 +71,7 @@ namespace WebAPI.Services
 
                 if (recording == null)
                 {
-                    _logger.LogWarning("Recording not found for file: {FileName}. Skipping transcription save.", fileName);
+                _logger.LogWarning("Recording not found for file: {FileName}. Skipping transcription save.", fileName);
                     return;
                 }
 
@@ -91,6 +92,15 @@ namespace WebAPI.Services
             {
                 throw new InvalidOperationException($"Failed to save transcription for {fileName}: {ex.Message}", ex);
             }
+        }
+
+        public async Task<List<string>> GetUserDeviceTokensAsync(int userId)
+        {
+            return await _context.UserDevices
+                .Where(d => d.UserId == userId)
+                .Select(d => d.DeviceToken)
+                .AsNoTracking()
+                .ToListAsync();
         }
     }
 }

@@ -19,12 +19,12 @@ namespace WebAPI.Tests;
 
 public class StubMessaging : IMessaging
 {
-    public List<(int AudioId, string FilePath)> SentMessages1 { get; } = [];
+    public List<(int AudioId, string FilePath, List<string> DeviceTokens)> SentMessages1 { get; } = [];
     public List<(string Topic, string Message)> SentMessages { get; } = [];
 
-    public Task SendMessage1Async(int audioId, string filePath)
+    public Task SendMessage1Async(int audioId, string filePath, List<string> deviceTokens)
     {
-        SentMessages1.Add((audioId, filePath));
+        SentMessages1.Add((audioId, filePath, deviceTokens));
         return Task.CompletedTask;
     }
 
