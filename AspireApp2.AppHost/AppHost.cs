@@ -1,3 +1,4 @@
+
 using Aspire.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -36,16 +37,18 @@ var umbracoDb = sqlServer.AddDatabase("umbracoDbDSN");
 
 var umbracoCms = builder.AddProject<Projects.UmbracoCms>("umbraco-cms")
     .WithReference(umbracoDb)
+    .WithHttpEndpoint(port: 5190, name: "umbraco-http")
     .WithExternalHttpEndpoints()
     .WaitFor(sqlServer);
 
-builder.AddProject<Projects.WebAPI>("webapi")
-.WithReference(redis)
-.WithReference(kafka)
-.WithReference(postgres)
-.WithReference(umbracoCms)
-.WithExternalHttpEndpoints()
-.WaitFor(kafka);
+var webapi = builder.AddProject<Projects.WebAPI>("webapi")
+    .WithReference(redis)
+    .WithReference(kafka)
+    .WithReference(postgres)
+    .WithReference(umbracoCms)
+    .WithHttpEndpoint(port: 5187, name: "webapi-http")
+    .WithExternalHttpEndpoints()
+    .WaitFor(kafka);
 
 builder.AddProject<Projects.AudioService>("audioService")
     .WithReference(kafka)
@@ -57,4 +60,3 @@ builder.AddProject<Projects.NotificationService>("notification-service")
     .WaitFor(kafka);
 
 builder.Build().Run();
-
